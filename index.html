@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OoT Chronicle">
+<title>Sheikah Chronicle — OoT VS Race</title>
+<style>
+  :root {
+    --bg: #080d14;
+    --panel: #0f1722;
+    --card: #131e2c;
+    --card-curr: #17293f;
+    --border: #253649;
+    --accent: #388bfd;
+    --cyan: #58d5f7;
+    --gold: #eab308;
+    --green: #22c55e;
+    --purple: #a855f7;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  header {
+    background: rgba(15, 23, 34, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--cyan);
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  button {
+    background: #1e293b;
+    color: var(--text);
+    border: 1px solid #334155;
+    padding: 7px 11px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:active { transform: scale(0.97); }
+  button.primary { background: #1d4ed8; border-color: #3b82f6; color: #fff; }
+  button.vs-btn { background: #7e22ce; border-color: #a855f7; color: #fff; }
+  button.hint-btn { background: #a16207; border-color: #eab308; color: #fff; padding: 5px 9px; font-size: 0.76rem; }
+
+  .vs-panel {
+    max-width: 960px;
+    margin: 12px auto 0;
+    padding: 0 14px;
+  }
+  .vs-card {
+    background: linear-gradient(145deg, #111b29, #0d1520);
+    border: 1px solid #2b3f57;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .vs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .player-tabs {
+    display: flex;
+    gap: 6px;
+    background: #09101a;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #1e2d3d;
+  }
+  .p-tab {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+  }
+  .p-tab.active-p1 { background: #1d4ed8; color: #fff; }
+  .p-tab.active-p2 { background: #7e22ce; color: #fff; }
+
+  .vs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 600px) {
+    .vs-grid { grid-template-columns: 1fr; }
+  }
+  .racer-box {
+    background: #0c141f;
+    border: 1px solid #1e2d3d;
+    border-radius: 9px;
+    padding: 9px 12px;
+  }
+  .racer-box.p1-border { border-left: 3px solid #3b82f6; }
+  .racer-box.p2-border { border-left: 3px solid #a855f7; }
+  .racer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.84rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .name-edit {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #475569;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.86rem;
+    width: 130px;
+    padding: 1px 2px;
+  }
+  .prog-track {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .prog-fill-p1 { height: 100%; background: linear-gradient(90deg, #2563eb, #38bdf8); transition: width 0.3s; }
+  .prog-fill-p2 { height: 100%; background: linear-gradient(90deg, #7e22ce, #e879f9); transition: width 0.3s; }
+  .mini-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .mini-stats span b { color: #e2e8f0; }
+
+  .controls-bar {
+    max-width: 960px;
+    margin: 10px auto 0;
+    padding: 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+  .filter-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .f-pill {
+    background: #131e2c;
+    border: 1px solid #253649;
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 99px;
+    font-size: 0.76rem;
+  }
+  .f-pill.active {
+    background: #1e3a5f;
+    border-color: #38bdf8;
+    color: #fff;
+  }
+
+  .shield-banner {
+    max-width: 932px;
+    margin: 10px auto;
+    background: #112236;
+    border: 1px solid #1e3a5f;
+    color: #7dd3fc;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  main {
+    max-width: 960px;
+    margin: 8px auto;
+    padding: 0 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    margin-bottom: 10px;
+  }
+  .card.current {
+    background: var(--card-curr);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .card.done {
+    background: #0c131d;
+    border-color: #192d24;
+    opacity: 0.74;
+  }
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .card-head input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    accent-color: #2563eb;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .card-body { flex: 1; min-width: 0; }
+  .title-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .step-title {
+    font-weight: 700;
+    font-size: 0.96rem;
+    line-height: 1.35;
+  }
+  .card.done .step-title { text-decoration: line-through; color: var(--muted); }
+  .badges {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+  }
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    text-transform: uppercase;
+  }
+  .b-curr { background: #2563eb; color: #fff; }
+  .b-ahead { background: #1e293b; color: #7dd3fc; border: 1px solid #334155; }
+  .b-main { background: #15803d; color: #fff; }
+  .b-upgrade { background: #7e22ce; color: #fff; }
+  .b-heartpiece { background: #be123c; color: #fff; }
+  .b-bottle { background: #0369a1; color: #fff; }
+  .b-skulltula { background: #a16207; color: #fff; }
+  .b-loc { background: #1e293b; color: #94a3b8; }
+
+  .desc {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.48;
+  }
+  .hint-drawer {
+    margin-top: 10px;
+    background: #09101a;
+    border: 1px solid #253649;
+    border-radius: 8px;
+    padding: 11px;
+    display: none;
+  }
+  .hint-drawer.open { display: block; }
+  pre.map-art {
+    background: #050910;
+    border: 1px solid #1e293b;
+    padding: 9px;
+    border-radius: 6px;
+    color: #7dd3fc;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    overflow-x: auto;
+    margin: 0 0 9px 0;
+  }
+  .hint-item {
+    background: #131e2c;
+    border-left: 3px solid var(--gold);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 0.84rem;
+    line-height: 1.42;
+    border-radius: 0 6px 6px 0;
+  }
+  .sealed {
+    background: #0b111a;
+    border: 1px dashed #1e293b;
+    border-radius: 9px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    color: #475569;
+    font-size: 0.82rem;
+    font-style: italic;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #0f1722;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 18px;
+  }
+  .modal h2 { margin: 0 0 8px; font-size: 1.1rem; color: var(--cyan); }
+  .modal p { margin: 0 0 12px; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+  .q-group { margin-bottom: 14px; }
+  .q-group h3 { margin: 0 0 6px; font-size: 0.85rem; color: #e2e8f0; }
+  .q-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .q-chip {
+    background: #131e2c;
+    border: 1px solid #2b3f57;
+    color: #cbd5e1;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .q-chip.selected {
+    background: #1d4ed8;
+    border-color: #60a5fa;
+    color: #fff;
+    font-weight: 700;
+  }
+  textarea.code-box {
+    width: 100%;
+    height: 76px;
+    background: #080d14;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #7dd3fc;
+    font-family: monospace;
+    font-size: 0.78rem;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  .sync-line { display:flex; align-items:center; gap:6px; font-size:0.74rem; color:var(--muted); }
+  .dot { width:8px; height:8px; border-radius:50%; background:#64748b; display:inline-block; }
+  .dot.live { background:#22c55e; box-shadow:0 0 6px #22c55e; }
+  .dot.warn { background:#eab308; }
+  .lead-banner { text-align:center; font-weight:800; font-size:0.98rem; margin:2px 0 10px; padding:8px 10px; border-radius:9px; background:#0c141f; border:1px solid #1e2d3d; }
+  .lead-banner.p1 { color:#7dd3fc; border-color:#1d4ed8; }
+  .lead-banner.p2 { color:#f0abfc; border-color:#7e22ce; }
+  .lead-banner small { display:block; font-weight:600; font-size:0.72rem; color:var(--muted); margin-top:2px; }
+  .track { position:relative; height:46px; margin:4px 6px 14px; }
+  .track-line { position:absolute; left:0; right:0; top:21px; height:4px; background:#1e293b; border-radius:4px; }
+  .track-gap { position:absolute; top:21px; height:4px; border-radius:4px; transition:left .4s, width .4s; }
+  .track-tick { position:absolute; top:17px; width:2px; height:12px; background:#334155; transform:translateX(-1px); }
+  .track-tick.era { background:#eab308; height:16px; top:15px; }
+  .runner { position:absolute; top:0; transform:translateX(-50%); transition:left .5s cubic-bezier(.3,1.4,.5,1); font-size:0.66rem; font-weight:800; text-align:center; white-space:nowrap; }
+  .runner .pin { width:18px; height:18px; border-radius:50%; margin:0 auto; border:2px solid #fff; }
+  .runner.r1 .pin { background:#2563eb; }
+  .runner.r2 { top:26px; }
+  .runner.r2 .pin { background:#a855f7; }
+  .runner.r1 .lbl { color:#7dd3fc; margin-bottom:1px; }
+  .runner.r2 .lbl { color:#f0abfc; margin-top:1px; }
+  .track-ends { display:flex; justify-content:space-between; font-size:0.66rem; color:#475569; margin:0 2px; }
+  .p-tab.mine { outline:2px solid #fff; }
+  .flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { 0% { box-shadow:0 0 0 3px #eab308; } 100% { box-shadow:0 0 0 0 transparent; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-bar">
+    <div class="brand">◈ SHEIKAH CHRONICLE: OoT</div>
+    <div class="actions">
+      <button class="primary" onclick="openWizard()">📍 Where Am I?</button>
+      <button class="vs-btn" onclick="openShare()">🔗 Invite Brother</button>
+      <button onclick="scrollToCurrent()">🎯 Current</button>
+    </div>
+  </div>
+</header>
+
+<section class="vs-panel">
+  <div class="vs-card" id="vsCard">
+    <div class="vs-header">
+      <div class="player-tabs">
+        <button id="tabP1" class="p-tab" onclick="switchPlayer(1)">I'm Player 1</button>
+        <button id="tabP2" class="p-tab" onclick="switchPlayer(2)">I'm Player 2</button>
+      </div>
+      <span class="sync-line"><span id="syncDot" class="dot"></span><span id="syncText">Starting…</span></span>
+    </div>
+
+    <div id="leadBanner" class="lead-banner">Neck and neck!</div>
+
+    <div class="track" id="track">
+      <div class="track-line"></div>
+      <div class="track-gap" id="trackGap"></div>
+      <div id="ticks"></div>
+      <div class="runner r1" id="run1"><div class="lbl" id="run1lbl">P1</div><div class="pin"></div></div>
+      <div class="runner r2" id="run2"><div class="pin"></div><div class="lbl" id="run2lbl">P2</div></div>
+    </div>
+    <div class="track-ends"><span>Start</span><span>Master Sword</span><span>Ganon 🏁</span></div>
+
+    <div class="vs-grid" style="margin-top:10px;">
+      <div class="racer-box p1-border">
+        <div class="racer-top">
+          <input id="nameP1" class="name-edit" value="Ahren (P1)" onchange="renameMe(1)" title="Player 1 name">
+          <span id="pctP1" style="color:#38bdf8;">0%</span>
+        </div>
+        <div class="prog-track"><div id="barP1" class="prog-fill-p1" style="width:0%"></div></div>
+        <div class="mini-stats" id="statsP1"></div>
+      </div>
+      <div class="racer-box p2-border">
+        <div class="racer-top">
+          <input id="nameP2" class="name-edit" value="Brother (P2)" onchange="renameMe(2)" title="Player 2 name">
+          <span id="pctP2" style="color:#e879f9;">0%</span>
+        </div>
+        <div class="prog-track"><div id="barP2" class="prog-fill-p2" style="width:0%"></div></div>
+        <div class="mini-stats" id="statsP2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="controls-bar">
+  <div class="filter-pills">
+    <button id="fAll" class="f-pill active" onclick="setFilter('all')">100% Everything</button>
+    <button id="fMain" class="f-pill" onclick="setFilter('main')">Main &amp; Upgrades</button>
+    <button id="fCatchup" class="f-pill" onclick="setFilter('catchup')">Unchecked Early Extras</button>
+  </div>
+  <button id="resetBtn" onclick="resetMine()" style="font-size:0.75rem; padding:5px 9px;">Reset My Run</button>
+</div>
+
+<div class="shield-banner">
+  🔒 <strong>3-STEP SPOILER SHIELD:</strong> Only your current step &amp; next 2 steps are visible. You see how far your rival is, never what's in their steps.
+</div>
+
+<main id="checklist"></main>
+
+<div id="wizardModal" class="modal-backdrop">
+  <div class="modal">
+    <h2>📍 Where Are You in Ocarina of Time?</h2>
+    <p>Tap the Stones, Medallions, and Key Items you already own. We'll check off the required story beats up to your spot while keeping earlier optional Heart Pieces unsealed!</p>
+
+    <div class="q-group">
+      <h3>1. Spiritual Stones &amp; Sage Medallions</h3>
+      <div class="q-chips" id="qStones">
+        <div class="q-chip" data-steps="1,2,3,5">Kokiri's Emerald</div>
+        <div class="q-chip" data-steps="8,9,11,12">Goron's Ruby</div>
+        <div class="q-chip" data-steps="14,15,16">Zora's Sapphire</div>
+        <div class="q-chip" data-steps="19,20,21">Forest Medallion</div>
+        <div class="q-chip" data-steps="23">Fire Medallion</div>
+        <div class="q-chip" data-steps="25,26">Water Medallion</div>
+        <div class="q-chip" data-steps="28,29">Shadow Medallion</div>
+        <div class="q-chip" data-steps="30,31,32">Spirit Medallion</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <h3>2. Key Equipment &amp; Spells Owned</h3>
+      <div class="q-chips" id="qItems">
+        <div class="q-chip" data-steps="19">Master Sword</div>
+        <div class="q-chip" data-steps="20">Hookshot &amp; Epona</div>
+        <div class="q-chip" data-steps="21">Fairy Bow</div>
+        <div class="q-chip" data-steps="23">Megaton Hammer</div>
+        <div class="q-chip" data-steps="25">Iron Boots &amp; Zora Tunic</div>
+        <div class="q-chip" data-steps="26">Longshot &amp; Fire Arrows</div>
+        <div class="q-chip" data-steps="28">Lens of Truth</div>
+        <div class="q-chip" data-steps="29">Hover Boots</div>
+        <div class="q-chip" data-steps="30">Gerudo Card &amp; Ice Arrows</div>
+        <div class="q-chip" data-steps="32">Silver Gauntlets &amp; Mirror Shield</div>
+        <div class="q-chip" data-steps="27">Biggoron's Sword</div>
+        <div class="q-chip" data-steps="34">Light Arrows &amp; Golden Gauntlets</div>
+      </div>
+    </div>
+
+    <div class="q-group">
+      <h3>3. Empty Bottles Owned</h3>
+      <div class="q-chips" id="qBottles">
+        <div class="q-chip" data-steps="7">Bottle #1 (Lon Lon Milk)</div>
+        <div class="q-chip" data-steps="9">Bottle #2 (Kakariko Cuccos)</div>
+        <div class="q-chip" data-steps="14">Bottle #3 (Ruto's Letter)</div>
+        <div class="q-chip" data-steps="33">Bottle #4 (10 Big Poes)</div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+      <button onclick="closeWizard()">Cancel</button>
+      <button class="primary" onclick="applyWizard()">Set My Checkpoint</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="shareModal" class="modal-backdrop">
+  <div class="modal">
+    <h2>🔗 Invite Your Rival</h2>
+    <p>Text this link to your brother. When he opens it he joins <b>this race</b> as Player 2, and every check-off syncs live between your phones. No sign-in needed.</p>
+    <textarea id="shareLink" class="code-box" readonly></textarea>
+    <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+      <button id="newRaceBtn" onclick="newRace()">🆕 Start a New Race</button>
+      <span style="display:flex; gap:8px;">
+        <button onclick="closeShare()">Close</button>
+        <button class="primary" onclick="copyShare()">📋 Copy Link</button>
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS = [{"id": 1, "era": "Child Era", "region": "Kokiri Forest", "cat": "Main", "title": "Claim the Kokiri Sword", "desc": "Crawl through the small tunnel in the fenced training area in southern Kokiri Forest, dodge the rolling boulder, and open the chest.", "rewards": {"item": "Kokiri Sword"}, "hints": ["Hint 1: Head to the southeast corner of Kokiri Forest behind the Know-It-All Brothers' house.", "Hint 2: Press A in front of the small square tunnel in the fenced training area to crawl inside.", "Hint 3: Wait for the rolling boulder to pass, run into the back-left dead-end alcove, and open the chest."], "map": " [Crawl Tunnel] -> [Dodge Boulder] -> [Back-Left Alcove Chest: Kokiri Sword]"}, {"id": 2, "era": "Child Era", "region": "Kokiri Forest", "cat": "Main", "title": "Buy the Deku Shield (40 Rupees)", "desc": "Gather 40 Rupees around Kokiri Forest and buy the Deku Shield at the Kokiri Shop, then equip it in your menu.", "rewards": {"item": "Deku Shield"}, "hints": ["Hint 1: Jump across the stepping stones in the pond for a Blue Rupee (5) and check the roofs of Link's and Mido's houses.", "Hint 2: Buy the Deku Shield at the red-roofed Kokiri Shop for 40 Rupees.", "Hint 3: Press Start -> Equipment -> highlight Deku Shield and press A to equip."], "map": " [Pond Stones (5R)] + [House Roofs] -> [Kokiri Shop (40R)] -> [Equip Deku Shield]"}, {"id": 3, "era": "Child Era", "region": "Inside the Deku Tree", "cat": "Main", "title": "Acquire the Fairy Slingshot", "desc": "Climb to 2F inside the Great Deku Tree, deflect the Deku Scrub's nut with your shield, and open the large chest.", "rewards": {"item": "Fairy Slingshot"}, "hints": ["Hint 1: Climb the ladder and vines up the central trunk to 2F.", "Hint 2: Hold Z-Target and press R to bounce the Deku Scrub's nut back at him.", "Hint 3: Open the large chest for the Fairy Slingshot, then shoot the vine ladder above the door to drop it down."], "map": " [Trunk 2F] -> [Reflect Deku Scrub Nut] -> [CHEST: Fairy Slingshot] -> [Shoot Ladder Above Door]"}, {"id": 4, "era": "Child Era", "region": "Inside the Deku Tree", "cat": "Skulltula", "title": "Deku Tree Gold Skulltulas (3 Tokens)", "desc": "Collect all 3 Gold Skulltulas inside the Great Deku Tree.", "rewards": {"skulltulas": 3}, "hints": ["GS #1 (3F Compass Room): On the wall grate right next to the compass chest.", "GS #2 (B1 Basement Vines): On the climbing vine wall near the floor switch in the basement.", "GS #3 (B1 Secret Bomb Room): Burn the corner web in the spike-roller basement room and bomb the cracked wall behind it (requires Bomb Bag)."], "map": " *GS1: 3F Compass Grate | *GS2: B1 Basement Vines | *GS3: B1 Behind Cobweb + Bomb Wall"}, {"id": 5, "era": "Child Era", "region": "Inside the Deku Tree", "cat": "Main", "title": "Defeat Queen Gohma & Claim Kokiri's Emerald", "desc": "Solve the 2-3-1 Deku Scrub puzzle in B2 and defeat Queen Gohma to earn your first Spiritual Stone and Heart Container #1.", "rewards": {"stone": "Kokiri's Emerald", "hearts": 4}, "hints": ["Hint 1 (2-3-1 Order): Deflect nuts back at the three Deku Scrubs in exact order: Middle (2) -> Right (3) -> Left (1).", "Hint 2 (Boss): Shoot Queen Gohma's red eye with the Fairy Slingshot to stun her, then slash with your sword.", "Hint 3: Claim the full Heart Container and step into the blue light for Kokiri's Emerald."], "map": " [B2 Scrubs: Hit 2 -> 3 -> 1] -> [Shoot Gohma's Red Eye w/ Slingshot] -> [Kokiri's Emerald]"}, {"id": 6, "era": "Child Era", "region": "Lost Woods / Kokiri", "cat": "Upgrade", "title": "Deku Stick & Deku Nut Upgrades + Skull Kid Heart Piece #1", "desc": "Grab the early Lost Woods upgrades and Piece of Heart #1 before heading across Hyrule Field.", "rewards": {"hearts": 1, "upgrade": "Bullet Bag (40) & Stick/Nut Upgrades"}, "hints": ["Heart Piece #1 (Skull Kid): Go Left from Lost Woods entrance, stand on the stump, and play Saria's Song (once learned) for Skull Kid.", "Bullet Bag (40): Go Right -> Left -> Right -> Left -> Left in Lost Woods and hit the hanging target 3 times with 100s on your Slingshot.", "Deku Stick Upgrade (20): Go Left -> Left in Lost Woods, drop into the tall grass, and buy from the Business Scrub for 40 Rupees. (Also wear Skull Mask at Forest Stage later for Stick Upgrade 30, and Mask of Truth for Nut Upgrade 40!)"], "map": " [Lost Woods Left: Skull Kid = HP #1] | [Target Shooting = Bullet Bag 40] | [Forest Stage = Stick/Nut Upgrades]"}, {"id": 7, "era": "Child Era", "region": "Lon Lon Ranch", "cat": "Bottle", "title": "Empty Bottle #1 (Super Cucco Game), Epona's Song & Heart Piece #2", "desc": "Win Talon's Super Cucco minigame for Bottle #1, learn Epona's Song from Malon, and grab the silo Heart Piece.", "rewards": {"bottles": 1, "hearts": 1, "song": "Epona's Song"}, "hints": ["Bottle #1: Enter Talon's house on the left side of Lon Lon Ranch and win the Super Cucco game (30 Rupees).", "Epona's Song: Talk to Malon in the central horse corral and pull out your Ocarina.", "Heart Piece #2: Enter the storage shed at the back-left corner of the ranch and pull the milk crates aside to reveal a crawlspace holding Piece of Heart #2."], "map": " [Talon's House: Bottle #1] | [Corral: Malon = Epona's Song] | [Back-Left Shed Crates = HP #2]"}, {"id": 8, "era": "Child Era", "region": "Hyrule Castle", "cat": "Main", "title": "Sneak Into Hyrule Castle & Learn Zelda's Lullaby", "desc": "Wake Talon near the moat with Malon's Cucco, enter the drain, sneak past the courtyard guards, and learn Zelda's Lullaby.", "rewards": {"song": "Zelda's Lullaby"}, "hints": ["Hint 1: Talk to Malon by the castle vines for the Pocket Egg; wait until morning for it to hatch into a Cucco.", "Hint 2: Climb the vines, drop to the moat, wake Talon with the Cucco, and push two milk crates into the water to reach the drain.", "Hint 3: Sneak through the courtyard hedges to meet Princess Zelda and learn Zelda's Lullaby."], "map": " [Vines] -> [Wake Talon] -> [Push 2 Crates in Moat] -> [Crawl Drain] -> [Princess Zelda: Zelda's Lullaby]"}, {"id": 9, "era": "Child Era", "region": "Kakariko Village", "cat": "Bottle", "title": "Empty Bottle #2 (Cucco Roundup) & Heart Piece #3 (Impa's Cage)", "desc": "Round up Anju's 7 Cuccos for Bottle #2, start the Happy Mask Shop sidequest, and grab the Heart Piece inside Impa's house.", "rewards": {"bottles": 1, "hearts": 1}, "hints": ["Bottle #2: Toss all 7 Cuccos into the pen near the Death Mountain gate for Anju.", "Heart Piece #3: Climb Death Mountain Trail partway, ride the owl Kaepora Gaebora down to Kakariko Village, drop off the rooftop onto the balcony, and enter the cow cage inside Impa's house!", "Happy Mask Quest: Visit the Happy Mask Shop in Hyrule Market to borrow the Keaton Mask and sell it to the Death Mountain gate guard in Kakariko."], "map": " [7 Cuccos -> Pen = Bottle #2] | [Owl Ride from Death Mtn -> Impa's Rooftop Balcony = HP #3]"}, {"id": 10, "era": "Child Era", "region": "Kakariko Graveyard", "cat": "Main", "title": "Learn the Sun's Song & Heart Pieces #4, #5, #6", "desc": "Learn the Sun's Song in the Royal Family's Tomb, plus collect all 3 Child-era Graveyard Pieces of Heart.", "rewards": {"hearts": 3, "song": "Sun's Song"}, "hints": ["Sun's Song: Play Zelda's Lullaby on the Triforce emblem in front of the Royal Family's Tomb and read the tablet inside.", "Heart Piece #4 (Damp\u00e9's Tour): Play Damp\u00e9's Heart-Pounding Gravedigging Tour (6 PM\u20139 PM, 10 Rupees) and have him dig on soft dirt patches.", "Heart Piece #5 (ReDead Tomb): Pull back the gravestone with flowers on the left side, drop in, defeat the ReDead, and play Sun's Song to spawn the chest.", "Heart Piece #6 (Magic Bean Ledge): Plant a Magic Bean in the soft soil in the graveyard (buy from Zora's River), then ride the plant as an Adult to reach the crate on the high ledge."], "map": " [Royal Tomb: Sun's Song] | [Damp\u00e9 Digging = HP #4] | [Flower Tomb Sun's Song = HP #5] | [Bean Ledge = HP #6]"}, {"id": 11, "era": "Child Era", "region": "Lost Woods / Goron City", "cat": "Main", "title": "Learn Saria's Song, Goron's Bracelet & Heart Piece #7", "desc": "Learn Saria's Song in Sacred Forest Meadow, get the Goron's Bracelet from Darunia, and grab the spinning-pot Heart Piece.", "rewards": {"hearts": 1, "upgrade": "Goron's Bracelet", "song": "Saria's Song"}, "hints": ["Lost Woods Path: Right -> Left -> Right -> Left -> Straight -> L -> R to reach Sacred Forest Meadow and learn Saria's Song.", "Goron's Bracelet: Play Zelda's Lullaby on the rug outside Darunia's door on the bottom floor of Goron City, then play Saria's Song for him.", "Heart Piece #7: Light all torches on the bottom floor of Goron City to spin the giant pot, then toss a Bomb Flower into the top of the spinning pot from 2F!"], "map": " [Sacred Forest Meadow: Saria's Song] -> [Darunia: Goron Bracelet] -> [Bomb into Spinning Pot = HP #7]"}, {"id": 12, "era": "Child Era", "region": "Dodongo's Cavern", "cat": "Main", "title": "Bomb Bag, Skulltulas (5) & Defeat King Dodongo", "desc": "Open Dodongo's Cavern with a Bomb Flower, claim the Bomb Bag, collect 5 Skulltulas, and defeat King Dodongo for Goron's Ruby.", "rewards": {"stone": "Goron's Ruby", "hearts": 4, "skulltulas": 5, "upgrade": "Bomb Bag (20)"}, "hints": ["Bomb Bag: Defeat the two Lizalfos on 2F and open the chest on the far balcony.", "Giant Skull: Drop Bomb Flowers through both eye sockets on the 2F bridge to open the skull's mouth below.", "Gold Skulltulas (5): (1) East 1F bomb wall; (2) High vines in Baby Dodongo room; (3) Above main staircase after bombing pillar; (4) 2F Armos statue alcove; (5) Bomb wall near Lizalfos room.", "Boss (King Dodongo): Toss a Bomb into his open mouth when he inhales, then slash him while stunned."], "map": " [2F Bridge: Bomb Both Eyes] -> [1F Skull Mouth Opens] -> [King Dodongo: Goron's Ruby]"}, {"id": 13, "era": "Child Era", "region": "Death Mountain Trail / Goron City", "cat": "Upgrade", "title": "Great Fairy Magic Meter + Bomb Bag (30) + Heart Piece #8", "desc": "Get your Magic Meter at the Death Mountain Summit, upgrade your Bomb Bag in Goron City, and grab Heart Piece #8 above Dodongo's Cavern.", "rewards": {"hearts": 1, "upgrade": "Magic Meter & Bomb Bag (30)"}, "hints": ["Magic Meter: Bomb the cracked wall to the left of the Death Mountain Crater entrance at the summit and play Zelda's Lullaby.", "Heart Piece #8: Backflip off the cliff path just above the Dodongo's Cavern entrance onto the red roof of the cavern to grab Piece of Heart #8!", "Bomb Bag (30): In Goron City (2F), throw a Bomb directly in front of the fast-rolling Goron to stop him and earn the Bigger Bomb Bag."], "map": " [Summit Bomb Wall: Magic Meter] | [Backflip onto Dodongo Roof = HP #8] | [Stop Rolling Goron = Bomb Bag 30]"}, {"id": 14, "era": "Child Era", "region": "Zora's River / Domain", "cat": "Main", "title": "Silver Scale, Ruto's Letter (Bottle #3) & Heart Pieces #9, #10, #11", "desc": "Win the Zora diving game for the Silver Scale, grab Ruto's Letter in Lake Hylia, and collect 3 Heart Pieces along the river and domain.", "rewards": {"bottles": 1, "hearts": 3, "upgrade": "Silver Scale"}, "hints": ["Heart Piece #9 & #10 (Zora's River): Carry the Cucco from the river entrance up the cliffs to reach the high pillar Heart Piece (#9), and jump onto the high ledge near the waterfall (#10).", "Silver Scale & Bottle #3: Win the Zora diving game at the top of Zora's Domain for the Silver Scale, dive through the shortcut tunnel to Lake Hylia, and grab Ruto's Letter underwater.", "Heart Piece #11 (Zora's Domain): Light all the torches in Zora's Domain quickly (starting from the King's chamber down to behind the waterfall) to spawn a chest behind the waterfall!"], "map": " [River Cucco Pillar = HP #9] | [Waterfall Ledge = HP #10] | [Light Domain Torches = HP #11] | [Lake Shortcut = Bottle #3]"}, {"id": 15, "era": "Child Era", "region": "Zora's Fountain", "cat": "Main", "title": "Feed Lord Jabu-Jabu a Fish & Get Farore's Wind", "desc": "Show Ruto's Letter to King Zora, grab Farore's Wind from the southeast boulder cave, and drop a bottled fish in front of Jabu-Jabu.", "rewards": {"upgrade": "Farore's Wind"}, "hints": ["Farore's Wind: Swim to the southeast corner of Zora's Fountain, bomb the large gray boulder, and play Zelda's Lullaby inside.", "Enter Jabu-Jabu: Scoop a fish into an Empty Bottle in Zora's Domain's shallow water and drop it right on the platform in front of Jabu-Jabu's mouth."], "map": " [Southeast Boulder = Farore's Wind] | [Drop Bottled Fish in front of Jabu-Jabu -> Enter Dungeon]"}, {"id": 16, "era": "Child Era", "region": "Inside Jabu-Jabu's Belly", "cat": "Main", "title": "Boomerang, Skulltulas (4) & Defeat Barinade (Zora's Sapphire)", "desc": "Rescue Princess Ruto, claim the Boomerang, collect all 4 Gold Skulltulas, and defeat Barinade for the final Spiritual Stone.", "rewards": {"stone": "Zora's Sapphire", "hearts": 4, "skulltulas": 4, "item": "Boomerang"}, "hints": ["Boomerang: Drop down the pitfall with Ruto to B1, carry her to weigh down blue switches, and defeat the Stinger mini-boss in the 1F tentacle hub.", "Gold Skulltulas (4): (1) B1 rising water switch wall; (2 & 3) TWO Skulltulas on the B1 vine wall right before Ruto's platform; (4) On the vines in the 1F room right before the boss door.", "Boss (Barinade): Cut its 3 ceiling tendrils with the Boomerang, then stun its main body with the Boomerang and slash with your sword."], "map": " *GS1: B1 Water Switch | *GS2 & *GS3: B1 Pitfall Vines | *GS4: Pre-Boss Vines -> [Barinade: Zora's Sapphire]"}, {"id": 17, "era": "Child Era", "region": "Hyrule Castle / Market / Ranch", "cat": "Upgrade", "title": "Din's Fire, Bombchu Bowling (HP #12 & Bomb Bag 40), Richard's Dog (HP #13) & Shooting Gallery (Bullet Bag 50)", "desc": "Sweep up the remaining Child-era upgrades and Market minigame Heart Pieces before drawing the Master Sword.", "rewards": {"hearts": 2, "upgrade": "Din's Fire, Bomb Bag (40) & Bullet Bag (50)"}, "hints": ["Din's Fire: Take the dead-end path right outside Hyrule Castle gate, bomb the boulder, and play Zelda's Lullaby.", "Bombchu Bowling (Market Night): Win rounds to earn Piece of Heart #12 and the Biggest Bomb Bag (40).", "Richard's Dog (Market Back Alley Night): Lead the white dog behind the Bazaar to the lady's house for Piece of Heart #13.", "Market Shooting Gallery (Day): Hit all 10 targets with the Slingshot for the Largest Bullet Bag (50). Also finish the Happy Mask Shop chain (Keaton -> Skull -> Spooky -> Bunny Hood) to unlock the Mask of Truth!"], "map": " [Castle Boulder = Din's Fire] | [Bombchu Bowling = HP #12 + Bomb Bag 40] | [White Dog = HP #13]"}, {"id": 18, "era": "Child Era", "region": "Hyrule Field / Lake Hylia / Gerudo", "cat": "HeartPiece", "title": "Child Overworld Heart Pieces (#14\u2013#19) & Fishing Hole (Golden Scale)", "desc": "Grab the 6 remaining Child-era Heart Pieces across Hyrule Field, Lake Hylia, and Gerudo Valley before becoming an Adult.", "rewards": {"hearts": 6, "upgrade": "Golden Scale"}, "hints": ["HP #14 (Hyrule Field Fence Grotto): Bomb the center of the fenced square near Lon Lon Ranch, drop down, and buy the Heart Piece from the Scrub for 10 Rupees.", "HP #15 (Hyrule Field Tree Grotto): Near the Kakariko River entrance, bomb the lone tree, dive to the bottom of the grotto pond (requires Golden Scale or Iron Boots later).", "HP #16 (Fishing Pond): Catch a 10+ pound fish at Lake Hylia's Fishing Pond as a Child for Piece of Heart #16 (and catch a 15+ pound fish as an Adult for the Golden Scale!).", "HP #17 (Lakeside Lab): Dive to the bottom of the tank inside the Lake Hylia Lab with the Golden Scale and talk to the scientist.", "HP #18 & #19 (Gerudo Valley): Carry the Cucco at Gerudo Valley entrance and glide down to the crate on the ledge (#18) and behind the waterfall (#19)."], "map": " [Ranch Fence Grotto = HP #14] | [Tree Grotto = HP #15] | [Fishing = HP #16] | [Lab = HP #17] | [Gerudo = HP #18 & #19]"}, {"id": 19, "era": "Transition", "region": "Temple of Time", "cat": "Main", "title": "Ocarina of Time, Song of Time & Draw the Master Sword", "desc": "Approach the Hyrule Castle drawbridge to get the Ocarina of Time, then open the Door of Time and pull the Master Sword.", "rewards": {"item": "Ocarina of Time & Master Sword", "song": "Song of Time"}, "hints": ["Hint 1: Walk toward the Hyrule Castle drawbridge, then dive into the moat to pick up the Ocarina of Time.", "Hint 2: Enter the Temple of Time and play the Song of Time in front of the Spiritual Stone altar.", "Hint 3: Walk into the inner sanctum and pull the Master Sword from the Pedestal of Time."], "map": " [Drawbridge Moat: Ocarina of Time] -> [Temple of Time: Song of Time] -> [Draw Master Sword]"}, {"id": 20, "era": "Adult Era", "region": "Kakariko Graveyard / Ranch", "cat": "Main", "title": "Hookshot, Epona, Song of Storms & Heart Pieces #20, #21, #22", "desc": "Race Damp\u00e9 for the Hookshot, free Epona at Lon Lon Ranch, learn the Song of Storms, and grab 3 quick Adult Heart Pieces.", "rewards": {"item": "Hookshot & Epona", "hearts": 3, "song": "Song of Storms"}, "hints": ["Hookshot & HP #20: Pull back the flower gravestone in Kakariko Graveyard, race Damp\u00e9 for the Hookshot, then race him a second time in under 1:00 minute for Piece of Heart #20!", "Song of Storms & HP #21: Exit Damp\u00e9's tomb into the Kakariko Windmill to grab HP #21 on the ledge, and play your Ocarina for Guru-Guru to learn the Song of Storms.", "Epona & HP #22: Pay 10R at Lon Lon Ranch, play Epona's Song, beat Ingo twice, jump the outer fence to keep Epona, and climb onto Impa's house roof in Kakariko (Hookshot) to talk to the man on the roof for HP #22!"], "map": " [Damp\u00e9 Race 1 = Hookshot] | [Damp\u00e9 <1:00 = HP #20] | [Windmill = HP #21 + Song of Storms] | [Kakariko Roof = HP #22]"}, {"id": 21, "era": "Adult Era", "region": "Forest Temple", "cat": "Main", "title": "Fairy Bow, Skulltulas (5) & Defeat Phantom Ganon (Forest Medallion)", "desc": "Learn the Minuet of Forest in Sacred Forest Meadow, clear the Forest Temple, and defeat Phantom Ganon.", "rewards": {"medallion": "Forest Medallion", "hearts": 4, "skulltulas": 5, "item": "Fairy Bow"}, "hints": ["Fairy Bow & Poe Sisters: Twist the hallways, defeat the Stalfos for the Fairy Bow, and defeat all 4 Poe Sisters (Joelle, Beth, Amy, Meg).", "Gold Skulltulas (5): (1) Entrance courtyard right vines; (2) Main hall high wall; (3) North courtyard high wall; (4) South courtyard above doorway; (5) Rotating basement wall room.", "Boss (Phantom Ganon): Shoot the bright/solid rider emerging from the paintings, then play sword energy-ball tennis."], "map": " [Sacred Forest Meadow: Minuet] -> [Forest Temple: Fairy Bow] -> [Phantom Ganon: Forest Medallion]"}, {"id": 22, "era": "Adult Era", "region": "Kakariko / Lost Woods", "cat": "Upgrade", "title": "Adult Shooting Gallery (Quiver 40) & Horseback Archery (Quiver 50 + HP #23)", "desc": "Upgrade your Quiver twice and earn Piece of Heart #23 at the Gerudo Horseback Archery range.", "rewards": {"hearts": 1, "upgrade": "Quiver (40) & Biggest Quiver (50)"}, "hints": ["Quiver (40): Win the Kakariko Village Shooting Gallery as an Adult using the Fairy Bow.", "Quiver (50) & HP #23: Ride Epona to Gerudo Fortress (jump the broken bridge in Gerudo Valley), enter the Horseback Archery range behind the fortress, score 1,000 points for Piece of Heart #23, and score 1,500 points for the Biggest Quiver (50)!"], "map": " [Kakariko Shooting Gallery = Quiver 40] | [Gerudo Horseback Archery: 1000pts = HP #23, 1500pts = Quiver 50]"}, {"id": 23, "era": "Adult Era", "region": "Death Mountain / Fire Temple", "cat": "Main", "title": "Goron Tunic, Megaton Hammer, Skulltulas (5) & Volvagia (Fire Medallion)", "desc": "Stop the rolling Goron for the Goron Tunic, learn Bolero of Fire, clear the Fire Temple, and defeat Volvagia.", "rewards": {"medallion": "Fire Medallion", "hearts": 4, "skulltulas": 5, "item": "Megaton Hammer & Goron Tunic"}, "hints": ["Goron Tunic: Bomb the rolling Goron on 2F of Goron City, equip the Goron Tunic, and pull Darunia's statue back to enter Death Mountain Crater.", "Megaton Hammer & Skulltulas (5): Claim the Megaton Hammer on 5F; GS spots: (1) 1F Song of Time block; (2) 2F boulder maze bomb wall; (3 & 4) Scarecrow Song upper ledge; (5) 5F rusted switch wall.", "Boss (Volvagia): Smash Volvagia's head with the Megaton Hammer when it pops out of a lava hole, then slash with your sword."], "map": " [Goron City: Goron Tunic] -> [Fire Temple: Megaton Hammer] -> [Volvagia: Fire Medallion]"}, {"id": 24, "era": "Adult Era", "region": "Death Mountain Crater", "cat": "Upgrade", "title": "Double Magic Meter + Crater Heart Pieces (#24 & #25)", "desc": "Grab the Double Magic upgrade and two Crater Heart Pieces right after finishing the Fire Temple.", "rewards": {"hearts": 2, "upgrade": "Double Magic Meter"}, "hints": ["Double Magic: Cross the broken bridge in Death Mountain Crater with the Hookshot and smash the boulders blocking the Great Fairy cave with the Megaton Hammer.", "Heart Piece #24 (Crater Wall): Climb down the ladder near the Death Mountain Trail crater entrance into a small alcove in the crater wall.", "Heart Piece #25 (Volcano Peak): Plant a Magic Bean as a Child at the Bolero of Fire warp pad, then ride the flying plant as an Adult to the top of the volcano spire!"], "map": " [Hammer Boulders = Double Magic] | [Crater Wall Alcove = HP #24] | [Magic Bean Spire = HP #25]"}, {"id": 25, "era": "Adult Era", "region": "Zora's Fountain / Ice Cavern", "cat": "Main", "title": "Iron Boots, Zora Tunic, Skulltulas (3) & Ice Cavern Heart Pieces (#26, #27, #28)", "desc": "Clear the Ice Cavern for the Iron Boots and Serenade of Water, thaw King Zora for the Zora Tunic, and grab 3 icy Heart Pieces.", "rewards": {"hearts": 3, "skulltulas": 3, "item": "Iron Boots & Zora Tunic", "song": "Serenade of Water"}, "hints": ["Ice Cavern & HP #26: Melt the red ice in the compass room with bottled Blue Fire to grab HP #26, defeat the White Wolfos for the Iron Boots, and learn Serenade of Water. (GS: Scythe room, Compass room, Ice block room).", "Zora Tunic: Bring Blue Fire back to Zora's Domain and pour it on King Zora.", "Heart Piece #27 & #28 (Zora's Fountain): Jump across the floating icebergs in Zora's Fountain to grab HP #27 on an iceberg, then put on Iron Boots and sink to the bottom of Zora's Fountain for HP #28!"], "map": " [Ice Cavern: Iron Boots + HP #26] -> [Thaw King Zora: Zora Tunic] -> [Fountain Iceberg HP #27 & Underwater HP #28]"}, {"id": 26, "era": "Adult Era", "region": "Water Temple / Lake Hylia", "cat": "Main", "title": "Longshot, Skulltulas (5), Defeat Morpha (Water Medallion) & Fire Arrows", "desc": "Complete the Water Temple at the bottom of Lake Hylia and shoot the morning sun for the Fire Arrows.", "rewards": {"medallion": "Water Medallion", "hearts": 4, "skulltulas": 5, "item": "Longshot & Fire Arrows"}, "hints": ["Central Pillar Key Trick: After raising the water inside the central tower to the middle level, sink to the bottom beneath the floating block to find a hidden key room!", "Dark Link & Longshot: Defeat Dark Link in the illusion room (use Megaton Hammer or Din's Fire without Z-Targeting) to claim the Longshot.", "Gold Skulltulas (5): (1) South 1F bomb wall; (2) Winding river room grate; (3) Central tower high wall; (4) East boulder/waterfall room; (5) Moving waterfall wall.", "Boss (Morpha) & Fire Arrows: Yank Morpha's red nucleus out of the water with the Longshot and slash it. Afterward, stand on the Water Temple island warp pad, play Sun's Song until dawn, and shoot an arrow into the rising sun for Fire Arrows!"], "map": " [Central Pillar Under-Block Key] -> [Dark Link: Longshot] -> [Morpha: Water Medallion] -> [Shoot Sun = Fire Arrows]"}, {"id": 27, "era": "Adult Era", "region": "Hyrule Trading Sequence", "cat": "Upgrade", "title": "Biggoron's Sword (11-Step Trading Quest) & Lake Lab Roof HP #29", "desc": "Complete the Hyrule trading sequence for the unbreakable Biggoron's Sword and grab Piece of Heart #29 on top of the Lakeside Lab.", "rewards": {"hearts": 1, "item": "Biggoron's Sword"}, "hints": ["Trading Chain: Pocket Egg -> Pocket Cucco (wake Talon) -> Cojiro (Lost Woods guy) -> Odd Mushroom (3m timer to Kakariko Old Hag) -> Odd Potion (Lost Woods Kokiri girl) -> Poacher's Saw (Gerudo carpenter) -> Broken Goron Sword (Biggoron) -> Prescription (King Zora) -> Eyeball Frog (3m no-warp to Lake Lab) -> Eye Drops (4m no-warp to Biggoron) -> Wait 3 days -> Biggoron's Sword!", "Heart Piece #29: Plant a Magic Bean as a Child next to the Lakeside Lab, then ride the plant as an Adult onto the roof and climb the ladder to grab HP #29."], "map": " [11-Step Trade -> Biggoron's Sword] | [Magic Bean onto Lakeside Lab Roof = HP #29]"}, {"id": 28, "era": "Adult Era", "region": "Kakariko / Bottom of the Well", "cat": "Main", "title": "Nocturne of Shadow, Lens of Truth & Well Skulltulas (3)", "desc": "Learn Nocturne of Shadow in Kakariko, return to Child Era to drain the well with Song of Storms, and claim the Lens of Truth.", "rewards": {"skulltulas": 3, "item": "Lens of Truth", "song": "Nocturne of Shadow"}, "hints": ["Nocturne of Shadow: Enter Kakariko Village after clearing the Water Temple to watch the well cutscene.", "Drain Well & Lens of Truth: Return to Child Era, play Song of Storms in the Kakariko Windmill, enter Bottom of the Well, walk straight through the fake wall, play Zelda's Lullaby to drain the basement, drop into the entrance pit, and defeat Dead Hand for the Lens of Truth.", "Gold Skulltulas (3): (1) NW locked room; (2) NE locked room; (3) SE Like-Like room."], "map": " [Kakariko Well Cutscene: Nocturne] -> [Child Windmill Song of Storms] -> [Bottom of Well: Lens of Truth]"}, {"id": 29, "era": "Adult Era", "region": "Shadow Temple", "cat": "Main", "title": "Hover Boots, Skulltulas (5) & Defeat Bongo Bongo (Shadow Medallion)", "desc": "Open the Shadow Temple with Din's Fire, claim the Hover Boots, ride the Ghost Ship, and defeat Bongo Bongo.", "rewards": {"medallion": "Shadow Medallion", "hearts": 4, "skulltulas": 5, "item": "Hover Boots"}, "hints": ["Hover Boots: Cast Din's Fire in the entry room, point the bird statue toward the real skull (Lens of Truth), and defeat Dead Hand for the Hover Boots.", "Gold Skulltulas (5): (1) Invisible wall in spike-ceiling room; (2) Invisible-scythe cell; (3) Giant spinning skull pots; (4) Ghost Ship dock (Scarecrow Song); (5) Three spinning skulls room before boss.", "Boss (Bongo Bongo): Shoot both hands with arrows, turn on the Lens of Truth to reveal its eye, shoot the eye, and slash!"], "map": " [Din's Fire Entry] -> [Hover Boots] -> [Ghost Ship] -> [Bongo Bongo (Lens of Truth): Shadow Medallion]"}, {"id": 30, "era": "Adult Era", "region": "Gerudo Fortress / Training Ground", "cat": "Main", "title": "Gerudo Membership Card, Ice Arrows & Fortress Roof HP #30", "desc": "Rescue the 4 carpenters in Gerudo Fortress for the Gerudo Card, grab HP #30 on the roof, and clear the Gerudo Training Ground for Ice Arrows.", "rewards": {"hearts": 1, "item": "Gerudo Card & Ice Arrows"}, "hints": ["Gerudo Card: Stun patrolling guards from afar with your Fairy Bow and defeat the 4 jail guards to free the carpenters.", "Heart Piece #30: Use the Longshot (or Scarecrow's Song) to reach the chest on the highest rooftop above Gerudo Fortress.", "Ice Arrows: Pay 10 Rupees to enter the Gerudo Training Ground, collect the keys (use Lens of Truth in the central maze ceiling for a hidden key!), and open the central chest."], "map": " [Free 4 Carpenters = Gerudo Card] | [Highest Roof Chest = HP #30] | [Training Ground = Ice Arrows]"}, {"id": 31, "era": "Adult Era", "region": "Haunted Wasteland / Desert Colossus", "cat": "Main", "title": "Requiem of Spirit, Nayru's Love & Desert Colossus HP #31", "desc": "Cross the Haunted Wasteland using Hover Boots and Lens of Truth, learn Requiem of Spirit, and grab Nayru's Love + HP #31.", "rewards": {"hearts": 1, "upgrade": "Nayru's Love", "song": "Requiem of Spirit"}, "hints": ["Crossing: Hover Boots across the quicksand river -> follow flags to stone ruin -> climb ladder and use Lens of Truth to follow the Poe guide.", "Nayru's Love: Bomb the cracked wall nestled between two palm trees on the eastern side of Desert Colossus.", "Heart Piece #31: Plant a Magic Bean as a Child next to the Spirit Temple entrance, then ride it as an Adult onto the stone arch holding HP #31!"], "map": " [Hover Boots + Poe Guide] -> [Requiem of Spirit] | [2 Palm Trees Bomb Wall = Nayru's Love] | [Bean Arch = HP #31]"}, {"id": 32, "era": "Adult Era", "region": "Spirit Temple (Child & Adult)", "cat": "Main", "title": "Silver Gauntlets, Mirror Shield, Skulltulas (5) & Twinrova (Spirit Medallion)", "desc": "Complete both the Child and Adult wings of the Spirit Temple and defeat Twinrova for the final Sage Medallion.", "rewards": {"medallion": "Spirit Medallion", "hearts": 4, "skulltulas": 5, "item": "Silver Gauntlets & Mirror Shield"}, "hints": ["Child Wing -> Silver Gauntlets: Crawl into the left side as a Child, defeat the Iron Knuckle, and open the chest on the outside left hand.", "Adult Wing -> Mirror Shield: Push the silver block on the right side as an Adult, defeat the Iron Knuckle, and open the chest on the outside right hand.", "Gold Skulltulas (5): (1) Child bridge fence; (2) Child Iron Knuckle stairs wall; (3) Main statue climbing wall; (4) Adult boulder room Song of Time block; (5) Top of giant goddess statue shoulder.", "Boss (Twinrova): Reflect Koume/Kotake's spells into each other; in Phase 2, absorb 3 beams of the SAME element into your Mirror Shield to blast her back!"], "map": " [Child Left: Silver Gauntlets] + [Adult Right: Mirror Shield] -> [Twinrova (Absorb 3 Same Beams): Spirit Medallion]"}, {"id": 33, "era": "Adult Era", "region": "Hyrule Cleanup (Skulls, Poes & Final HPs)", "cat": "HeartPiece", "title": "10 Big Poes (Bottle #4), 50 Gold Skulltulas (HP #32) & Final Heart Pieces (#33\u2013#36)", "desc": "Hunt 10 Big Poes on Epona for Bottle #4, claim all House of Skulltula rewards, and sweep up the final 5 Pieces of Heart (36/36).", "rewards": {"bottles": 1, "hearts": 5, "upgrade": "Giant's Wallet (500) & Stone of Agony"}, "hints": ["Bottle #4 (10 Big Poes): Ride Epona at full speed across Hyrule Field landmarks (near Lon Lon walls, lone tree, Kakariko river, Gerudo entrance, southern cliffs), shoot each Big Poe twice, bottle it, and sell all 10 to the Market guardhouse Ghost Shop!", "House of Skulltula Milestones: 10 = Adult's Wallet (200); 20 = Stone of Agony; 30 = Giant's Wallet (500); 40 = Bombchus; 50 = Piece of Heart #32!", "Final Heart Pieces (#33\u2013#36): HP #33 = Bomb the grotto near the lone tree west of Lon Lon Ranch and buy from the Scrub (20R); HP #34 = Bomb the grotto near the Kakariko entrance/trees and defeat the Skulltula/enemies; HP #35 = Play the Song of Storms inside the grotto beneath the tree/rocks near Hyrule Castle/Market moat (or in Lost Woods Scrub grotto wearing Mask of Truth); HP #36 = Death Mountain Crater Magic Bean / Darunia's chamber grotto\u2014check your Heart total to confirm 19 full hearts before Ganon's Castle!"], "map": " [10 Big Poes = Bottle #4] | [50 Skulltulas = Giant Wallet + HP #32] | [Final Grottos = 36/36 Heart Pieces!]"}, {"id": 34, "era": "Adult Era", "region": "Temple of Time / Ganon's Castle", "cat": "Main", "title": "Light Arrows, Golden Gauntlets & Double Defense", "desc": "Receive the Light Arrows at the Temple of Time, grab the Golden Gauntlets inside Ganon's Castle, and unlock Double Defense outside.", "rewards": {"item": "Light Arrows & Golden Gauntlets", "upgrade": "Double Defense"}, "hints": ["Light Arrows: Enter the Temple of Time with all 6 Sage Medallions.", "Golden Gauntlets: Inside Ganon's Castle, clear the Shadow Barrier room (purple emblem) to claim the Golden Gauntlets.", "Double Defense: Exit Ganon's Castle onto the bridge, turn right along the cliff ledge, lift the massive black granite pillar, and play Zelda's Lullaby inside the Great Fairy Fountain to cut all damage in half!"], "map": " [Temple of Time: Light Arrows] -> [Shadow Barrier: Golden Gauntlets] -> [Lift Outside Black Pillar = Double Defense]"}, {"id": 35, "era": "Adult Era", "region": "Ganon's Castle / Tower", "cat": "Main", "title": "Dispel the 6 Barriers, Defeat Ganondorf & Save Hyrule!", "desc": "Shoot the 6 elemental barrier spheres with Light Arrows, ascend Ganon's Tower, defeat Ganondorf and Ganon, and beat the game!", "rewards": {"complete": true}, "hints": ["6 Barriers: Clear Forest, Fire, Water, Shadow, Spirit, and Light rooms and shoot each glowing orb with a Light Arrow.", "Ganondorf: Reflect his energy orb with your Master Sword, immediately shoot him with a Light Arrow while stunned, then Longshot across and slash him!", "Final Boss (Ganon): Roll between Ganon's legs to strike his glowing tail with the Megaton Hammer or Biggoron's Sword until Zelda lowers the flames so you can reclaim the Master Sword!"], "map": " [Shoot 6 Barrier Orbs w/ Light Arrows] -> [Ganondorf: Reflect + Light Arrow] -> [Ganon: Hit Tail -> Master Sword Finish!]"}];
+const TOTAL = STEPS.length;
+const LS = "oot_live_vs_v2";
+
+let state = {
+  me: 0,
+  filter: "all",
+  p1: { name: "Ahren (P1)", done: [], t: 0 },
+  p2: { name: "Brother (P2)", done: [], t: 0 }
+};
+try {
+  const saved = JSON.parse(localStorage.getItem(LS) || "null");
+  if (saved) state = { ...state, ...saved };
+} catch (e) {}
+
+let openDrawers = new Set();
+let hintCounts = {};
+
+function P(n) { return n === 2 ? state.p2 : state.p1; }
+function meN() { return state.me || 1; }
+
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = document.createElement("div"); t.id = "toast";
+    t.style.cssText = "position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1d4ed8;color:#fff;padding:10px 16px;border-radius:10px;font-size:0.85rem;font-weight:600;z-index:300;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:opacity .3s;";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity = "1";
+  clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = "0"; }, 2600);
+}
+
+function setSync(text, mode) {
+  document.getElementById("syncText").textContent = text;
+  document.getElementById("syncDot").className = "dot" + (mode ? " " + mode : "");
+}
+
+/* ---------- my progress changes ---------- */
+function changeMine(mutator) {
+  const p = P(meN());
+  const s = new Set(p.done);
+  mutator(s);
+  p.done = [...s].sort((a, b) => a - b);
+  p.t = Date.now();
+  saveLocal();
+  render();
+  queuePush();
+}
+function toggleStep(id) { changeMine(s => s.has(id) ? s.delete(id) : s.add(id)); }
+
+function renameMe(n) {
+  const el = document.getElementById(n === 1 ? "nameP1" : "nameP2");
+  if (n !== meN()) { el.value = P(n).name; toast("You can only rename yourself."); return; }
+  P(n).name = (el.value || "").trim().slice(0, 24) || ("Player " + n);
+  P(n).t = Date.now();
+  saveLocal(); render(); queuePush();
+}
+
+function switchPlayer(n) {
+  if (n === state.me) return;
+  state.me = n;
+  openDrawers.clear();
+  saveLocal(); render();
+  toast("This phone is now " + P(n).name + ".");
+  queuePush();
+}
+
+function setFilter(f) { state.filter = f; saveLocal(); render(); }
+
+function resetMine() {
+  const btn = document.getElementById("resetBtn");
+  if (btn.dataset.armed === "1") {
+    btn.dataset.armed = "0"; btn.textContent = "Reset My Run";
+    changeMine(s => s.clear());
+    toast("Your run was reset.");
+  } else {
+    btn.dataset.armed = "1"; btn.textContent = "Tap again to confirm";
+    setTimeout(() => { btn.dataset.armed = "0"; btn.textContent = "Reset My Run"; }, 3000);
+  }
+}
+
+function scrollToCurrent() {
+  const el = document.querySelector(".card.current");
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+/* ---------- wizard ---------- */
+document.querySelectorAll(".q-chip").forEach(chip => chip.addEventListener("click", () => chip.classList.toggle("selected")));
+function openWizard() { document.getElementById("wizardModal").classList.add("open"); }
+function closeWizard() { document.getElementById("wizardModal").classList.remove("open"); }
+function applyWizard() {
+  const picked = new Set();
+  document.querySelectorAll(".q-chip.selected").forEach(chip => chip.dataset.steps.split(",").forEach(n => picked.add(parseInt(n, 10))));
+  changeMine(s => { s.clear(); picked.forEach(x => s.add(x)); });
+  closeWizard();
+  setTimeout(scrollToCurrent, 80);
+}
+
+/* ---------- race id + live sync (ntfy.sh, no accounts) ---------- */
+const SYNC_HOST = "https://ntfy.sh/";
+let raceId = null, es = null, pushTimer = null, sawRival = false, connected = false;
+
+function cleanRemote(d) {
+  if (!d || typeof d !== "object") return null;
+  const done = Array.isArray(d.done) ? d.done.filter(x => Number.isInteger(x) && x >= 1 && x <= TOTAL) : [];
+  return { name: (typeof d.name === "string" ? d.name : "").slice(0, 24), done: [...new Set(done)].sort((a,b)=>a-b), t: Number(d.t) || 0 };
+}
+
+let lastRivalCount = null;
+function applyRemote(n, d) {
+  const r = cleanRemote(d);
+  if (!r) return false;
+  const local = P(n);
+  if (r.t <= local.t) return false;
+  const rivalBefore = local.done.length;
+  local.name = r.name || local.name; local.done = r.done; local.t = r.t;
+  if (n !== meN() && r.done.length > rivalBefore && lastRivalCount !== null) {
+    toast("⚔️ " + local.name + " just checked off a step! (" + r.done.length + "/" + TOTAL + ")");
+    const card = document.getElementById("vsCard");
+    card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
+  }
+  return true;
+}
+
+
+function randId(n) {
+  const a = "abcdefghjkmnpqrstuvwxyz23456789";
+  const buf = new Uint8Array(n); crypto.getRandomValues(buf);
+  return [...buf].map(b => a[b % a.length]).join("");
+}
+function raceKey() { return LS + ":" + raceId; }
+function saveLocal() {
+  try { localStorage.setItem(raceKey(), JSON.stringify(state)); localStorage.setItem(LS + ":last", raceId); } catch (e) {}
+}
+function freshState(me) {
+  return { me, filter: "all", p1: { name: "Ahren (P1)", done: [], t: 0 }, p2: { name: "Brother (P2)", done: [], t: 0 } };
+}
+function setupRace() {
+  const m = (location.hash || "").match(/^#race-([a-z0-9]{6,32})$/);
+  let saved = null;
+  if (m) {
+    raceId = m[1];
+    try { saved = JSON.parse(localStorage.getItem(raceKey()) || "null"); } catch (e) {}
+    if (saved) state = { ...freshState(2), ...saved };
+    else { state = freshState(2); setTimeout(() => toast("⚔️ You joined the race as Player 2!"), 500); }
+  } else {
+    try { raceId = localStorage.getItem(LS + ":last"); } catch (e) {}
+    if (raceId) { try { saved = JSON.parse(localStorage.getItem(raceKey()) || "null"); } catch (e) {} }
+    if (!raceId) raceId = randId(12);
+    state = saved ? { ...freshState(1), ...saved } : freshState(1);
+    try { history.replaceState(null, "", "#race-" + raceId); } catch (e) {}
+  }
+  if (!state.me) state.me = 1;
+  saveLocal();
+}
+
+function shareUrl() { return location.href.split("#")[0] + "#race-" + raceId; }
+function openShare() { document.getElementById("shareLink").value = shareUrl(); document.getElementById("shareModal").classList.add("open"); }
+function closeShare() { document.getElementById("shareModal").classList.remove("open"); }
+function copyShare() {
+  const box = document.getElementById("shareLink"); box.select();
+  const ok = () => toast("Link copied! Text it to your brother.");
+  const fail = () => toast("Long-press the link and tap Copy.");
+  try { navigator.clipboard.writeText(box.value).then(ok, fail); } catch (e) { fail(); }
+}
+function newRace() {
+  const b = document.getElementById("newRaceBtn");
+  if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Tap again: new race"; setTimeout(() => { b.dataset.armed = "0"; b.textContent = "🆕 Start a New Race"; }, 3000); return; }
+  try { localStorage.removeItem(LS + ":last"); } catch (e) {}
+  location.href = location.href.split("#")[0];
+}
+
+function liveText() { return sawRival ? "Live — synced with your rival" : "Live — waiting for your rival to join"; }
+function queuePush() { clearTimeout(pushTimer); pushTimer = setTimeout(doPush, 500); }
+async function doPush() {
+  const n = meN(), p = P(n);
+  const body = JSON.stringify({ app: "sheikah1", p: n, name: p.name, done: p.done, t: p.t });
+  try {
+    const r = await fetch(SYNC_HOST + "sheikah-oot-" + raceId, { method: "POST", body });
+    if (!r.ok) throw new Error(String(r.status));
+    if (connected) setSync(liveText(), "live");
+  } catch (e) {
+    setSync("Offline — will sync when back online", "warn");
+    clearTimeout(pushTimer); pushTimer = setTimeout(doPush, 8000);
+  }
+}
+
+function handleMsg(raw) {
+  let d; try { d = JSON.parse(raw); } catch (e) { return; }
+  if (!d || d.app !== "sheikah1" || (d.p !== 1 && d.p !== 2)) return;
+  if (d.p !== meN()) sawRival = true;
+  if (applyRemote(d.p, d)) { saveLocal(); render(); }
+  if (d.p !== meN()) lastRivalCount = P(d.p).done.length;
+  if (connected) setSync(liveText(), "live");
+}
+
+function initSync() {
+  if (typeof EventSource === "undefined" || typeof fetch === "undefined") { setSync("This browser can't live-sync", "warn"); return; }
+  setSync("Connecting…");
+  es = new EventSource(SYNC_HOST + "sheikah-oot-" + raceId + "/sse?since=all");
+  es.onopen = () => { connected = true; setSync(liveText(), "live"); };
+  es.onmessage = ev => { try { const m = JSON.parse(ev.data); if (m.event === "message") handleMsg(m.message); } catch (e) {} };
+  es.onerror = () => { connected = false; setSync("Reconnecting…", "warn"); };
+  // replayed history arrives first; start rival pop-ups after it
+  setTimeout(() => { if (lastRivalCount === null) lastRivalCount = P(meN() === 1 ? 2 : 1).done.length; }, 2500);
+  if (P(meN()).t === 0) { P(meN()).t = Date.now(); saveLocal(); }
+  queuePush();
+  setInterval(queuePush, 6 * 3600 * 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) queuePush(); });
+}
+
+/* ---------- rendering ---------- */
+function computeStats(doneArr) {
+  const doneSet = new Set(doneArr);
+  let stonesMeds = 0, heartQuarters = 12, skulls = 0, bottles = 0;
+  STEPS.forEach(st => {
+    if (!doneSet.has(st.id)) return;
+    const r = st.rewards || {};
+    if (r.stone || r.medallion) stonesMeds++;
+    if (r.hearts) heartQuarters += r.hearts;
+    if (r.skulltulas) skulls += r.skulltulas;
+    if (r.bottles) bottles += r.bottles;
+  });
+  const pct = Math.round((doneSet.size / TOTAL) * 100);
+  const heartsDisplay = (heartQuarters / 4).toFixed(heartQuarters % 4 === 0 ? 0 : 2);
+  return { pct, stonesMeds, heartsDisplay, skulls, bottles: Math.min(bottles, 4) };
+}
+
+function shortName(n) { return (P(n).name || ("P" + n)).replace(/\s*\(P[12]\)\s*$/, "") || ("P" + n); }
+
+function renderScoreboard() {
+  const n1 = document.getElementById("nameP1"), n2 = document.getElementById("nameP2");
+  if (document.activeElement !== n1) n1.value = state.p1.name;
+  if (document.activeElement !== n2) n2.value = state.p2.name;
+  n1.readOnly = meN() !== 1; n2.readOnly = meN() !== 2;
+
+  document.getElementById("tabP1").className = "p-tab" + (meN() === 1 ? " active-p1" : "");
+  document.getElementById("tabP2").className = "p-tab" + (meN() === 2 ? " active-p2" : "");
+  document.getElementById("tabP1").textContent = meN() === 1 ? "✓ I'm Player 1" : "I'm Player 1";
+  document.getElementById("tabP2").textContent = meN() === 2 ? "✓ I'm Player 2" : "I'm Player 2";
+
+  [1, 2].forEach(n => {
+    const s = computeStats(P(n).done);
+    document.getElementById("pctP" + n).textContent = s.pct + "%";
+    document.getElementById("barP" + n).style.width = s.pct + "%";
+    document.getElementById("statsP" + n).innerHTML =
+      `<span>Steps: <b>${P(n).done.length}/${TOTAL}</b></span>` +
+      `<span>Stones/Meds: <b>${s.stonesMeds}/9</b></span>` +
+      `<span>Hearts: <b>${s.heartsDisplay}/20</b></span>` +
+      `<span>Skulls: <b>${s.skulls}</b></span>` +
+      `<span>Bottles: <b>${s.bottles}/4</b></span>`;
+  });
+
+  // race track
+  const c1 = state.p1.done.length, c2 = state.p2.done.length;
+  const x1 = (c1 / TOTAL) * 100, x2 = (c2 / TOTAL) * 100;
+  const r1 = document.getElementById("run1"), r2 = document.getElementById("run2");
+  r1.style.left = x1 + "%"; r2.style.left = x2 + "%";
+  document.getElementById("run1lbl").textContent = shortName(1) + (meN() === 1 ? " (you)" : "");
+  document.getElementById("run2lbl").textContent = shortName(2) + (meN() === 2 ? " (you)" : "");
+  const gap = document.getElementById("trackGap");
+  gap.style.left = Math.min(x1, x2) + "%";
+  gap.style.width = Math.abs(x1 - x2) + "%";
+  gap.style.background = c1 >= c2 ? "linear-gradient(90deg,#2563eb,#38bdf8)" : "linear-gradient(90deg,#7e22ce,#e879f9)";
+
+  const banner = document.getElementById("leadBanner");
+  const diff = c1 - c2;
+  if (diff === 0) {
+    banner.className = "lead-banner";
+    banner.innerHTML = c1 === 0 ? "🏁 The race hasn't started yet!" : "⚔️ Dead even!<small>" + c1 + " steps each</small>";
+  } else {
+    const lead = diff > 0 ? 1 : 2, behind = lead === 1 ? 2 : 1, d = Math.abs(diff);
+    const you = lead === meN();
+    banner.className = "lead-banner p" + lead;
+    const head = you ? "🔥 You're " + d + " step" + (d > 1 ? "s" : "") + " ahead of " + shortName(behind) + "!"
+                     : "😤 " + shortName(lead) + " is " + d + " step" + (d > 1 ? "s" : "") + " ahead of you!";
+    banner.innerHTML = "";
+    banner.appendChild(document.createTextNode(head));
+    const sm = document.createElement("small");
+    sm.textContent = shortName(1) + " " + c1 + "/" + TOTAL + "  •  " + shortName(2) + " " + c2 + "/" + TOTAL;
+    banner.appendChild(sm);
+  }
+}
+
+function buildTicks() {
+  const box = document.getElementById("ticks");
+  [0, 18, 35].forEach(i => {
+    const t = document.createElement("div");
+    t.className = "track-tick" + (i === 18 ? " era" : "");
+    t.style.left = (i / TOTAL * 100) + "%";
+    box.appendChild(t);
+  });
+}
+
+function toggleDrawer(id) {
+  if (openDrawers.has(id)) openDrawers.delete(id);
+  else { openDrawers.add(id); if (!hintCounts[id]) hintCounts[id] = 1; }
+  render();
+}
+function nextHint(id, max) { hintCounts[id] = Math.min((hintCounts[id] || 1) + 1, max); render(); }
+function escapeHtml(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function render() {
+  renderScoreboard();
+  ["all", "main", "catchup"].forEach(f => {
+    document.getElementById({ all: "fAll", main: "fMain", catchup: "fCatchup" }[f]).className = "f-pill" + (state.filter === f ? " active" : "");
+  });
+
+  const doneSet = new Set(P(meN()).done);
+  const maxDoneId = doneSet.size > 0 ? Math.max(...doneSet) : 0;
+
+  let filtered = STEPS;
+  if (state.filter === "main") filtered = STEPS.filter(s => s.cat === "Main" || s.cat === "Upgrade");
+  else if (state.filter === "catchup") filtered = STEPS.filter(s => !doneSet.has(s.id) && s.id < maxDoneId);
+
+  const uncompletedIdx = filtered.map((s, i) => !doneSet.has(s.id) ? i : -1).filter(i => i !== -1);
+  const revealedSet = new Set(uncompletedIdx.slice(0, 3));
+  const container = document.getElementById("checklist");
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="card" style="text-align:center; color:var(--muted);">No unchecked earlier extras — you're completely caught up!</div>`;
+    return;
+  }
+
+  filtered.forEach((step, idx) => {
+    const isDone = doneSet.has(step.id);
+    const isCurr = uncompletedIdx.length > 0 && idx === uncompletedIdx[0];
+    const isCatchupItem = !isDone && step.id < maxDoneId;
+    if (isDone || revealedSet.has(idx) || isCatchupItem) {
+      const card = document.createElement("div");
+      card.className = "card" + (isDone ? " done" : (isCurr ? " current" : ""));
+      const catClass = { Main: "b-main", Upgrade: "b-upgrade", HeartPiece: "b-heartpiece", Bottle: "b-bottle", Skulltula: "b-skulltula" }[step.cat] || "b-main";
+      const statusBadge = isCurr ? `<span class="badge b-curr">Current Objective</span>`
+        : (isCatchupItem ? `<span class="badge b-ahead">Earlier Extra Available</span>`
+        : (!isDone ? `<span class="badge b-ahead">+${idx - uncompletedIdx[0]} Step Ahead</span>` : ""));
+      const isOpen = openDrawers.has(step.id);
+      const count = hintCounts[step.id] || 1;
+      const hintsHtml = step.hints.slice(0, count).map(h => `<div class="hint-item">${escapeHtml(h)}</div>`).join("");
+      const rem = step.hints.length - count;
+      const moreBtn = rem > 0
+        ? `<button class="primary" onclick="nextHint(${step.id}, ${step.hints.length})">Reveal Next Hint (${rem} left)</button>`
+        : `<button disabled style="opacity:0.5;">All Hints Revealed</button>`;
+      card.innerHTML = `
+        <div class="card-head">
+          <input type="checkbox" ${isDone ? "checked" : ""} onchange="toggleStep(${step.id})">
+          <div class="card-body">
+            <div class="title-line">
+              <span class="step-title">#${step.id} ${escapeHtml(step.title)}</span>
+              <button class="hint-btn" onclick="toggleDrawer(${step.id})">💡 ${isOpen ? "Hide Map" : "Hints & Map"}</button>
+            </div>
+            <div class="badges">
+              <span class="badge b-loc">${escapeHtml(step.era)} • ${escapeHtml(step.region)}</span>
+              <span class="badge ${catClass}">${escapeHtml(step.cat)}</span>
+              ${statusBadge}
+            </div>
+            <div class="desc">${escapeHtml(step.desc)}</div>
+            <div class="hint-drawer ${isOpen ? "open" : ""}">
+              <pre class="map-art">${escapeHtml(step.map)}</pre>
+              ${hintsHtml}
+              <div style="margin-top:8px;">${moreBtn}</div>
+            </div>
+          </div>
+        </div>`;
+      container.appendChild(card);
+    } else {
+      const sealed = document.createElement("div");
+      sealed.className = "sealed";
+      sealed.textContent = `🔒 STEP #${step.id} — [SEALED BY 3-STEP SPOILER SHIELD • ${step.era.toUpperCase()}]`;
+      container.appendChild(sealed);
+    }
+  });
+}
+
+setupRace();
+buildTicks();
+render();
+initSync();
+</script>
+</body>
+</html>
